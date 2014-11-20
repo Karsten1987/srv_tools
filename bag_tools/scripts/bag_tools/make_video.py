@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Copyright (c) 2012,
 Systems, Robotics and Vision Group
@@ -50,14 +50,17 @@ def create_video(tmp_dir, args):
   rospy.loginfo("Renaming...")
   images = glob.glob(tmp_dir + '/*.jpg')
   images.sort()
+  print len(images)
+  print tmp_dir
   i = 1
   for image in images:
     shutil.move(image, tmp_dir + '/img-' + str(i) + '.jpg')
     i = i + 1
 
   rospy.loginfo('Creating video...')
-  cmd = ["ffmpeg", "-f", "image2", "-r", str(args.fps), "-i", tmp_dir + "/img-%d.jpg", args.output]
+  cmd = ["mencoder", "-nosound", "mf://"+str(tmp_dir)+"/*.jpg", "-mf", "w=320:h=240:type=jpg:fps="+str(args.fps), "-ovc", "lavc", "-lavcopts", "vcodec=mpeg4:vbitrate=2400", "-o", args.output]
   rospy.loginfo('    {}'.format(' '.join(cmd)))
+  print '    {}'.format(' '.join(cmd))
   subprocess.call(cmd)
 
 
@@ -71,14 +74,15 @@ if __name__ == "__main__":
         'to form a video. Note that ffmpeg must be installed on your system.')
   parser.add_argument('topic', help='topic of the images to use')
   parser.add_argument('--output', help='name of the output video. Note that the file ending defines the codec to use.', default='video.mp4')
-  parser.add_argument('--fps', help='frames per second in the output video, as long as codec supports this', type=int, default=20)
+  parser.add_argument('--fps', help='frames per second in the output video, as long as codec supports this', type=int, default=10)
   parser.add_argument('inbag', help='input bagfile(s)', nargs='+')
   args = parser.parse_args()
   tmp_dir = tempfile.mkdtemp()
+#  tmp_dir ='/tmp/rosbag'
   try:
     create_video(tmp_dir, args)
   except Exception, e:
     import traceback
     traceback.print_exc()
   rospy.loginfo('Cleaning up temp files...')
-  shutil.rmtree(tmp_dir)
+  #shutil.rmtree(tmp_dir)
