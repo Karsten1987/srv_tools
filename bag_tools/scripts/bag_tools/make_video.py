@@ -39,11 +39,11 @@ import subprocess
 import glob
 import shutil
 
-def create_video(tmp_dir, args):
+def create_video(tmp_dir, inbag, topic, output, fps):
   rospy.loginfo('Using {} as working directory.'.format(tmp_dir))
   rospy.loginfo('Extracting images...')
 
-  cmd = ["rosrun", "bag_tools", "extract_images" , tmp_dir, "jpg", args.topic] + args.inbag
+  cmd = ["rosrun", "bag_tools", "extract_images" , tmp_dir, "jpg", topic, inbag]
   rospy.loginfo('    {}'.format(' '.join(cmd)))
   subprocess.call(cmd)
 
@@ -54,11 +54,11 @@ def create_video(tmp_dir, args):
   print tmp_dir
   i = 1
   for image in images:
-    shutil.move(image, tmp_dir + '/img-' + str(i) + '.jpg')
+    #shutil.move(image, tmp_dir + '/img-' + str(i) + '.jpg')
     i = i + 1
 
   rospy.loginfo('Creating video...')
-  cmd = ["mencoder", "-nosound", "mf://"+str(tmp_dir)+"/*.jpg", "-mf", "w=320:h=240:type=jpg:fps="+str(args.fps), "-ovc", "lavc", "-lavcopts", "vcodec=mpeg4:vbitrate=2400", "-o", args.output]
+  cmd = ["mencoder", "-nosound", "mf://"+str(tmp_dir)+"/*.jpg", "-mf", "w=320:h=240:type=jpg:fps="+str(fps), "-ovc", "lavc", "-lavcopts", "vcodec=mpeg4:vbitrate=2400", "-o", output]
   rospy.loginfo('    {}'.format(' '.join(cmd)))
   print '    {}'.format(' '.join(cmd))
   subprocess.call(cmd)
@@ -76,13 +76,19 @@ if __name__ == "__main__":
   parser.add_argument('--output', help='name of the output video. Note that the file ending defines the codec to use.', default='video.mp4')
   parser.add_argument('--fps', help='frames per second in the output video, as long as codec supports this', type=int, default=10)
   parser.add_argument('inbag', help='input bagfile(s)', nargs='+')
+  parser.add_argument('-nodelete', action='store_true')
   args = parser.parse_args()
-  tmp_dir = tempfile.mkdtemp()
-#  tmp_dir ='/tmp/rosbag'
-  try:
-    create_video(tmp_dir, args)
-  except Exception, e:
-    import traceback
-    traceback.print_exc()
-  rospy.loginfo('Cleaning up temp files...')
-  #shutil.rmtree(tmp_dir)
+
+  import os
+  from os import path
+  for raw_inbag in args.inbag:
+    filename, ext = os.path.splitext( os.path.split( raw_inbag )[1] )
+
+    tmp_dir = tempfile.mkdtemp()
+    try:
+      create_video(tmp_dir, raw_inbag, args.topic, "videos/"+str(filename)+".mp4", args.fps)
+    except Exception, e:
+      import traceback
+      traceback.print_exc()
+    if not args.nodelete:
+      shutil.rmtree( tmp_dir )

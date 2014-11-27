@@ -25,6 +25,8 @@
 /// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 /// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 /// THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include <sstream>
+#include <iomanip>
 
 #include <ros/ros.h>
 
@@ -72,19 +74,20 @@ public:
 private:
   void save_image(uint64_t _time_stamp, const cv::Mat& _image)
   {
-      std::string filename =
-        boost::str(boost::format("%s/%s%lu.%s")
-            % save_dir_
-            % prefix_
-            % _time_stamp
-            % filetype_);
-      if (!cv::imwrite(filename, _image))
+
+      std::stringstream filename;
+      filename << save_dir_ << "/" << prefix_;
+      filename << std::setw(4) << std::setfill('0') << num_saved_;
+      filename << "." << filetype_;
+
+      std::cout << "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << filename.str() << std::endl;
+      if (!cv::imwrite(filename.str(), _image))
       {
-        ROS_ERROR_STREAM("ERROR Saving " << filename);
+        ROS_ERROR_STREAM("ERROR Saving " << filename.str());
       }
       else
       {
-        ROS_DEBUG_STREAM("Saved " << filename);
+        ROS_DEBUG_STREAM("Saved " << filename.str());
         num_saved_++;
       }
   }
