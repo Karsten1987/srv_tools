@@ -78,9 +78,10 @@ private:
       std::stringstream filename;
       filename << save_dir_ << "/" << prefix_;
       filename << std::setw(4) << std::setfill('0') << num_saved_;
+      filename << "_" << _time_stamp;
       filename << "." << filetype_;
 
-      std::cout << "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" << filename.str() << std::endl;
+      std::cout << "writing file: " << filename.str() << std::endl;
       if (!cv::imwrite(filename.str(), _image))
       {
         ROS_ERROR_STREAM("ERROR Saving " << filename.str());
